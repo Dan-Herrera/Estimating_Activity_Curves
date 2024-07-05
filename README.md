@@ -34,7 +34,7 @@ source("./YOUR FILE PATH/activityFunctions.R")
 ```
 
 <br>
-You'll want to use your own data, but for the sake of example we'll use the data that we used in the paper. You can access the entire data set via [Cove, et al. 2019](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1002/ecy.3353), our you can access a miniature version of this data set using the `UtahData()` function.
+You'll want to use your own data, but for the sake of example we'll use the data that we used in the paper. You can access the entire data set via [Cove, et al. 2021](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1002/ecy.3353), our you can access a miniature version of this data set using the `UtahData()` function.
 
 
 ```{}
