@@ -3,638 +3,50 @@ Daniel J. Herrera, Daniel Levy, Austin M. Green, William F. Fagan
 
 
 ### Background
-
 Ecologists routinely study the impact of predators on prey activity patterns through the largely qualitative approach of comparing overlapping activity density plots. While this method offers some insight into predator-prey dynamics, it does not actually quantify the degree to which a predator's activity impacts prey activity. Here, we present a novel model that overcomes this shortcoming by using predator detections and an ideal prey activity curve to quantify the impact of predator activity on prey activity patterns. The model assumes that species strive to adhere to an ideal activity distribution and quantifies the degree to which a predator prompts a departure from this ideal curve. This approach improves our ability to quantify and predict predator-prey interactions as they pertain to activity patterns. For a more detailed justification, please see our paper published in Ecological Modelling (2024).
-
+<br>
 ### Model Structure
-
 Our model is premised upon the idea that prey species try to adhere to a specific activity pattern in the absence of predators. Coincidentally, these patterns happen to resemble familiar data distributions. For instance, let's assume that our prey species' activity curve (blue) resembles the centered beta distribution (alpha = 2, beta = 2):
 ![readme plot1](https://github.com/Dan-Herrera/Estimating_Activity_Curves/assets/66024392/26cc4f9d-634c-42c7-aa45-5f7e03366f2c)
 
-
+<br>
 Now let's suppose a predator (red) is active during the same time period, but does not adhere to the same activity pattern as the prey.
 
 ![readme plot2](https://github.com/Dan-Herrera/Estimating_Activity_Curves/assets/66024392/c85f88a8-42b8-4e6e-af73-a1544921a4b8)
 
+<br>
 The previous graph assumes that the prey (blue) is not impacted by the predator (red). But our model uses the proportional intensity of predator activity to alter the prey activity curve (with a lower bound of zero since negative activity is not possible). Additionally, the model acknowledges that prey will respond differently to various predators. Thus, we estimate the sensitivity (s) of the prey to the predator. If the prey is highly sensitive, then its activity curve will be more dampened than if the prey has a low sensitivity value. Here's three different outcomes where s = 0.25 (top), 0.50 (middle), and 0.75 (bottom).
 
 ![readme plot3](https://github.com/Dan-Herrera/Estimating_Activity_Curves/assets/66024392/2d8dae5c-5ff0-4fce-9c56-3f7dccff6760)
 
+<br>
 Simply removing activity from the prey's curve is not biologically realistic, however, since the animal still needs to be out foraging, searching for mates, etc. Thus, the model allows the prey to respond by compensating for activity lost earlier in the active period. Importantly, the model assumes compensation for lost activity becomes more important later in the active period since there are progressively fewer opportunities to make up for lost activity as the day goes on (assuming being active outside of the active period is not possible). In the following plot, the dashed blue line represents the prey's activity when s = 0.25 and no lost activity is compensated for. The solid blue line represents the prey's activity when s = 0.25 and lost activity is compensated for. Note that compensation attempts at time t seek to restore the realized activity curve to the ideal activity curve as some later time t+x. In other words, allowing for activity compensation reveals an activity curve that seeks to return (or closely resemble) the ideal a priori activity curve.
 
 ![readme plot4](https://github.com/Dan-Herrera/Estimating_Activity_Curves/assets/66024392/8b843c5f-c1c2-4b70-8752-8bea5670c093)
 
+<br>
+
 ### Running the model on real data
 
 The above plots were made using fictitious data, which aren't particularly exciting or compelling. But our model allows for the estimation of s when using real data. To fit your own data to this model, be sure to download the functions script from the code folder and source the script so the functions exist in your environment.
-
+```{}
 source("./YOUR FILE PATH/activityFunctions.R")
-
-You'll want to use your own data, but for the sake of example we'll use the data that we used in the paper. You can access the entire data set via Cove, et al. 2019, our you can access a miniature version of this data set using the UtahData() function.
-
-{r, echo=FALSE}
-UtahData <- data.frame(project = "Snapshot USA 2019",
-             array = "Wasatch Wildlife Watch",
-             site = c("Creekside Park.USA.2019",       "Creekside Park.USA.2019"  ,    
-                      "Creekside Park.USA.2019"   ,    "Creekside Park.USA.2019"  ,    
-                      "Creekside Park.USA.2019" ,      "Creekside Park.USA.2019"  ,    
-                      "Creekside Park.USA.2019"  ,     "Creekside Park.USA.2019"  ,    
-                      "Creekside Park.USA.2019" ,      "Creekside Park.USA.2019"  ,    
-                      "Creekside Park.USA.2019"  ,     "Creekside Park.USA.2019"  ,    
-                      "Creekside Park.USA.2019"   ,    "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"    ,   "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"   ,    "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"    ,   "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"   ,    "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"    ,   "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"     ,  "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019",       "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019" ,      "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"  ,     "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"   ,    "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019"    ,   "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019",       "Crestwood Park.USA.2019"  ,    
-                      "Crestwood Park.USA.2019" ,      "Crestwood Park.USA.2019"  ,    
-                      "DD_01.USA.2019"           ,     "DD_01.USA.2019"           ,    
-                      "DD_01.USA.2019"            ,    "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019",                "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019" ,               "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"  ,              "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"   ,             "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"    ,            "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"     ,           "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"      ,          "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"       ,         "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"        ,        "DD_02.USA.2019"           ,    
-                      "DD_02.USA.2019"         ,       "DD_02.USA.2019"           ,    
-                      "DD_03.USA.2019",                "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019" ,               "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"  ,              "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"   ,             "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"    ,            "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"     ,           "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"      ,          "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"       ,         "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"        ,        "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"         ,       "DD_03.USA.2019"           ,    
-                      "DD_03.USA.2019"          ,      "DD_03.USA.2019"           ,    
-                      "DD_04.USA.2019"           ,     "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"            ,    "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"             ,   "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019",                "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019" ,               "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"  ,              "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"   ,             "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"    ,            "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"     ,           "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"      ,          "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"       ,         "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"        ,        "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"         ,       "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"          ,      "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"           ,     "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"            ,    "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"             ,   "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019",                "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019" ,               "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"  ,              "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"   ,             "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"    ,            "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"     ,           "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"      ,          "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"       ,         "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"        ,        "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"         ,       "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"          ,      "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"           ,     "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"            ,    "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019",                "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019" ,               "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"  ,              "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"   ,             "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"    ,            "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"     ,           "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"      ,          "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"       ,         "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"        ,        "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"         ,       "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"          ,      "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"           ,     "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"            ,    "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019",                "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019" ,               "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"  ,              "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"   ,             "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"    ,            "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"     ,           "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"      ,          "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"       ,         "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"        ,        "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"         ,       "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"          ,      "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"           ,     "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"            ,    "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019",                "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019" ,               "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"  ,              "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"   ,             "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"    ,            "DD_04.USA.2019"           ,    
-                      "DD_04.USA.2019"     ,           "DD_07.USA.2019"           ,    
-                      "General Holm Park N.USA.2019",  "General Holm Park N.USA.2019", 
-                      "General Holm Park N.USA.2019",  "General Holm Park N.USA.2019", 
-                      "General Holm Park N.USA.2019",  "General Holm Park N.USA.2019", 
-                      "General Holm Park N.USA.2019",  "General Holm Park N.USA.2019", 
-                      "General Holm Park N.USA.2019",  "General Holm Park N.USA.2019", 
-                      "General Holm Park N.USA.2019",  "General Holm Park N.USA.2019", 
-                      "General Holm Park N.USA.2019" , "General Holm Park N.USA.2019", 
-                      "General Holm Park N.USA.2019",  "General Holm Park S.USA.2019", 
-                      "General Holm Park S.USA.2019",  "General Holm Park S.USA.2019", 
-                      "General Holm Park S.USA.2019",  "General Holm Park S.USA.2019", 
-                      "General Holm Park S.USA.2019",  "General Holm Park S.USA.2019", 
-                      "General Holm Park S.USA.2019",  "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019",                "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019" ,               "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"  ,              "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"   ,             "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"    ,            "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"     ,           "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"      ,          "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"       ,         "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"        ,        "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"         ,       "JR_01.USA.2019"             ,  
-                      "JR_01.USA.2019"          ,      "JR_02.USA.2019"             ,  
-                      "JR_02.USA.2019"           ,     "JR_02.USA.2019"             ,  
-                      "JR_02.USA.2019"            ,    "JR_02.USA.2019"             ,  
-                      "JR_02.USA.2019"             ,   "JR_02.USA.2019"             ,  
-                      "JR_02.USA.2019"              ,  "JR_02.USA.2019"             ,  
-                      "JRP_02.USA.2019" ,              "JRP_02.USA.2019"            ,  
-                      "JRP_02.USA.2019"  ,             "JRP_02.USA.2019"             , 
-                      "JRP_02.USA.2019"   ,            "JRP_02.USA.2019"            ,  
-                      "JRP_02.USA.2019"    ,           "JRP_02.USA.2019"            ,  
-                      "JRP_02.USA.2019"     ,          "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"      ,         "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"       ,        "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"        ,       "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"         ,      "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"          ,     "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"           ,    "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"            ,   "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019" ,              "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"  ,             "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"   ,            "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"    ,           "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"     ,          "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"      ,         "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"       ,        "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"        ,       "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"         ,      "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"          ,     "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"           ,    "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019" ,              "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"  ,             "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"   ,            "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"    ,           "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"     ,          "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"      ,         "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"       ,        "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"        ,       "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"         ,      "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"          ,     "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"           ,    "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019" ,              "LCC_USA_01.2019"            ,  
-                      "LCC_USA_01.2019"  ,             "Little Confluence.USA.2019" ,  
-                      "Little Confluence.USA.2019",    "Little Confluence.USA.2019" ,  
-                      "Little Confluence.USA.2019",    "Little Confluence.USA.2019" ,  
-                      "Little Confluence.USA.2019",    "Little Confluence.USA.2019" ,  
-                      "Little Confluence.USA.2019",    "Little Confluence.USA.2019" ,  
-                      "Oxbow.USA.2019"            ,    "Parley's Nature Park.USA.2019",
-                      "Parley's Nature Park.USA.2019", "Parley's Nature Park.USA.2019",
-                      "Parley's Nature Park.USA.2019", "Parley's Nature Park.USA.2019",
-                      "Redwood Natural Area.USA.2019", "Redwood Natural Area.USA.2019",
-                      "Redwood Natural Area.USA.2019", "Redwood Natural Area.USA.2019",
-                      "Redwood Natural Area.USA.2019", "Redwood Natural Area.USA.2019",
-                      "Redwood Natural Area.USA.2019", "Redwood Natural Area.USA.2019",
-                      "Redwood Natural Area.USA.2019", "SLC Cemetery.USA.2019"        ,
-                      "SLC Cemetery.USA.2019"       ,  "WF.USA.2019"                  ,
-                      "WF.USA.2019"       ,            "WF.USA.2019"                  ,
-                      "WF.USA.2019"        ,           "WF.USA.2019"                  ,
-                      "WF.USA.2019"         ,          "WF.USA.2019"                  ,
-                      "WF.USA.2019"          ,         "WF.USA.2019"                  ,
-                      "WF.USA.2019"           ,        "WF.USA.2019"                  ,
-                      "WF.USA.2019"            ,       "WF.USA.2019"                  ,
-                      "WF.USA.2019"             ,      "WF.USA.2019"                  ,
-                      "WF.USA.2019"              ,     "WF.USA.2019"                  ,
-                      "WF.USA.2019"               ,    "WF.USA.2019"                  ,
-                      "WF.USA.2019"                ,   "WF.USA.2019"                  ,
-                      "WF.USA.2019" ,                  "WF.USA.2019"                  ,
-                      "WF.USA.2019"  ,                 "WF.USA.2019"                  ,
-                      "WF.USA.2019"   ,                "WF.USA.2019"                  ,
-                      "WF.USA.2019"    ,               "WF.USA.2019"                  ,
-                      "WF.USA.2019"     ,              "WF.USA.2019"                  ,
-                      "WF.USA.2019"      ,             "WF.USA.2019"                  ,
-                      "WF.USA.2019"       ,            "WF.USA.2019"                  ,
-                      "WF.USA.2019"        ,           "WF.USA.2019"                  ,
-                      "WF.USA.2019"         ,          "WF.USA.2019"                  ,
-                      "WF.USA.2019"          ,         "WF.USA.2019"                  ,
-                      "WF.USA.2019"           ,        "WF.USA.2019"                  ,
-                      "WF.USA.2019"            ,       "WF.USA.2019"                  ,
-                      "WF.USA.2019"             ,      "WF.USA.2019"                  ,
-                      "WF.USA.2019"              ,     "WF.USA.2019"                  ,
-                      "WF.USA.2019"               ,    "WF.USA.2019"                  ,
-                      "WF.USA.2019",                   "WF.USA.2019"                  ,
-                      "WF.USA.2019" ,                  "WF.USA.2019"                  ,
-                      "WF.USA.2019"  ,                 "WF.USA.2019"                  ,
-                      "WF.USA.2019"   ,                "WF.USA.2019"                  ,
-                      "WF.USA.2019"    ,               "WF.USA.2019"                  ,
-                      "WF.USA.2019"     ,              "WF.USA.2019"                  ,
-                      "WF.USA.2019"      ,             "WF.USA.2019"                  ,
-                      "WF.USA.2019"       ,            "WF.USA.2019"                  ,
-                      "WF.USA.2019"        ,           "WF.USA.2019"                  ,
-                      "WF.USA.2019"         ,          "WF.USA.2019"                  ,
-                      "WF.USA.2019"          ,         "WF.USA.2019"                  ,
-                      "WF.USA.2019"),
-             obs.time = c( "9/11/19 3:07",   "9/13/19 2:17"  , "9/16/19 0:35",  
-                           "9/16/19 2:29" ,  "9/16/19 5:33" ,  "9/18/19 3:32",  
-                          "9/18/19 21:22"  ,"9/19/19 3:09"  , "9/20/19 22:49", 
-                           "9/20/19 22:50",  "9/26/19 0:32" ,  "9/27/19 21:13" ,
-                          "9/27/19 22:42" , "9/9/19 3:11"   , "9/10/19 3:51",  
-                        "9/11/19 21:14"  ,"9/12/19 0:21"   ,"9/12/19 0:31",  
-                           "9/13/19 2:07",   "9/13/19 3:42" ,  "9/13/19 21:53", 
-                           "9/13/19 22:29",  "9/14/19 1:16" ,  "9/14/19 4:29" , 
-                           "9/14/19 6:25"  , "9/15/19 4:27" ,  "9/17/19 23:01", 
-                           "9/18/19 0:51"  , "9/18/19 4:13" ,  "9/20/19 2:10" , 
-                           "9/21/19 23:24"  ,"9/22/19 0:52" ,  "9/22/19 3:57" , 
-                           "9/23/19 2:48"   ,"9/26/19 23:03",  "9/27/19 1:25" , 
-                           "9/27/19 2:22",   "9/28/19 2:00" ,  "9/29/19 1:00" , 
-                           "9/29/19 1:57" ,  "10/3/19 0:34" ,  "10/3/19 21:46", 
-                           "10/9/19 22:52" , "10/9/19 4:10" ,  "10/11/19 21:27",
-                           "10/11/19 23:36" ,"10/11/19 23:48", "10/13/19 2:34" ,
-                           "10/13/19 2:56",  "10/15/19 21:47", "10/16/19 5:55", 
-                           "10/16/19 7:16" , "10/19/19 7:47",  "10/21/19 1:33", 
-                           "10/22/19 20:08", "10/27/19 20:32", "11/2/19 3:06" , 
-                           "11/2/19 15:10",  "11/5/19 21:24",  "11/7/19 21:35", 
-                           "11/9/19 7:56" ,  "11/13/19 3:35",  "11/16/19 20:45",
-                           "11/17/19 10:05", "10/5/19 20:26",  "10/6/19 0:03" , 
-                           "10/8/19 0:41" ,  "10/9/19 20:45",  "10/10/19 23:47",
-                           "10/14/19 7:15",  "10/17/19 3:41",  "10/17/19 20:01",
-                           "10/22/19 0:59",  "10/23/19 10:25", "10/25/19 4:59" ,
-                           "10/26/19 0:34",  "10/27/19 9:19",  "10/29/19 19:56",
-                           "11/4/19 7:39" ,  "11/4/19 21:12",  "11/7/19 5:42"  ,
-                           "11/8/19 20:11",  "11/9/19 4:17" ,  "11/10/19 21:54",
-                           "11/14/19 19:49", "11/14/19 19:51", "10/3/19 8:27"  ,
-                           "10/3/19 19:20",  "10/4/19 2:58" ,  "10/4/19 19:50" ,
-                           "10/5/19 5:07" ,  "10/5/19 18:30" , "10/6/19 3:46"  ,
-                           "10/8/19 5:32" ,  "10/8/19 6:28" ,  "10/9/19 22:50" ,
-                           "10/9/19 22:54",  "10/9/19 23:12",  "10/10/19 6:46" ,
-                           "10/10/19 7:51",  "10/10/19 21:19", "10/10/19 23:13",
-                           "10/11/19 1:08",  "10/11/19 1:10",  "10/11/19 2:21" ,
-                           "10/11/19 11:00", "10/11/19 11:02", "10/11/19 21:48",
-                           "10/11/19 22:18", "10/11/19 22:33", "10/11/19 22:38",
-                           "10/12/19 2:01",  "10/12/19 2:02",  "10/12/19 20:30",
-                           "10/12/19 23:45", "10/13/19 5:28",  "10/13/19 5:30" ,
-                           "10/13/19 7:16"  ,"10/18/19 0:08",  "10/18/19 6:01" ,
-                           "10/18/19 6:13",  "10/19/19 21:02", "10/20/19 7:23" ,
-                           "10/21/19 4:03" , "10/21/19 4:20",  "10/21/19 23:57",
-                           "10/22/19 6:20"  ,"10/22/19 6:21",  "10/22/19 19:26",
-                           "10/23/19 21:10", "10/24/19 11:51", "10/24/19 19:15",
-                           "10/25/19 3:52"  ,"10/25/19 4:10",  "10/25/19 9:16" ,
-                           "10/25/19 10:05", "10/25/19 21:21", "10/26/19 2:07" ,
-                          "10/26/19 4:12",  "10/26/19 7:31",  "10/27/19 5:06" ,
-                           "10/27/19 22:42", "10/27/19 23:13", "10/27/19 23:36",
-                           "10/28/19 4:05",  "10/29/19 5:07",  "10/30/19 0:53" ,
-                           "10/30/19 3:31",  "10/31/19 0:29",  "10/31/19 12:18",
-                           "11/1/19 5:28" ,  "11/1/19 17:49",  "11/2/19 3:17"  ,
-                           "11/3/19 2:31" ,  "11/3/19 13:07",  "11/5/19 20:46" ,
-                           "11/5/19 21:20",  "11/5/19 22:30",  "11/6/19 10:15" ,
-                           "11/7/19 6:14" ,  "11/7/19 7:26" ,  "11/7/19 7:28"  ,
-                           "11/7/19 22:07",  "11/7/19 22:33",  "11/8/19 0:11"  ,
-                           "11/8/19 0:56" ,  "11/8/19 6:32" ,  "11/8/19 19:14" ,
-                           "11/8/19 19:18",  "11/8/19 19:33",  "11/8/19 19:39" ,
-                           "11/8/19 19:57",  "11/9/19 0:44" ,  "11/9/19 3:18"  ,
-                           "11/9/19 7:08" ,  "11/9/19 20:10",  "11/9/19 20:16" ,
-                           "11/9/19 20:23",  "11/9/19 20:37",  "11/9/19 20:42" ,
-                           "11/9/19 20:43",  "11/9/19 20:46",  "11/9/19 21:06" ,
-                          "11/9/19 22:36" , "11/9/19 22:54" , "11/9/19 23:48" ,
-                           "11/9/19 23:51",  "11/10/19 0:01",  "11/10/19 4:12" ,
-                           "11/10/19 20:30", "11/10/19 21:53", "11/10/19 22:09",
-                           "11/11/19 3:22",  "11/11/19 3:29",  "11/11/19 7:36" ,
-                           "11/12/19 1:06",  "11/12/19 2:03",  "11/12/19 21:40",
-                           "11/12/19 21:41", "11/13/19 0:14",  "11/14/19 0:44" ,
-                           "11/14/19 11:45", "11/15/19 1:07",  "11/15/19 7:10" ,
-                           "11/15/19 7:11",  "11/15/19 12:07", "11/16/19 2:01" ,
-                           "11/16/19 4:33" , "11/16/19 5:49",  "11/14/19 0:47" ,
-                           "9/7/19 3:39"    ,"9/9/19 4:27"  ,  "9/12/19 5:40"  ,
-                           "9/14/19 6:01" ,  "9/18/19 5:25" ,  "9/21/19 3:44"  ,
-                           "9/21/19 6:38" ,  "9/21/19 6:45" ,  "9/21/19 6:50"  ,
-                           "9/22/19 1:30" ,  "9/22/19 5:15" ,  "9/22/19 6:34"  ,
-                           "9/30/19 0:38" ,  "9/30/19 4:39" ,  "9/30/19 4:59"  ,
-                           "9/6/19 3:11"  ,  "9/8/19 5:15"  ,  "9/9/19 2:14"   ,
-                           "9/10/19 2:36" ,  "9/11/19 20:26",  "9/14/19 1:45"  ,
-                           "9/18/19 2:11" ,  "9/22/19 2:06" ,  "9/10/19 1:13"  ,
-                           "9/11/19 1:20" ,  "9/11/19 4:36" ,  "9/11/19 6:12"  ,
-                           "9/11/19 22:49",  "9/12/19 20:08",  "9/12/19 22:30" ,
-                           "9/13/19 4:05"  , "9/13/19 20:48",  "9/14/19 7:03"  ,
-                           "9/14/19 19:48",  "9/17/19 4:13" ,  "9/17/19 5:12"  ,
-                           "9/19/19 4:20" ,  "9/20/19 1:08" ,  "9/23/19 6:10"  ,
-                           "9/23/19 11:05",  "9/24/19 5:41" ,  "9/25/19 23:02" ,
-                           "9/27/19 19:51",  "9/28/19 4:57" ,  "9/28/19 22:05" ,
-                           "9/8/19 22:04" ,  "9/8/19 22:36" ,  "9/9/19 13:46"  ,
-                           "9/16/19 5:24" ,  "9/21/19 3:06" ,  "9/25/19 2:30"  ,
-                           "9/27/19 0:08" ,  "9/28/19 6:12" ,  "9/28/19 20:09" ,
-                           "9/12/19 11:23",  "9/13/19 20:38",  "9/14/19 6:42"  ,
-                           "9/14/19 20:08",  "9/16/19 20:08",  "9/19/19 6:33"  ,
-                           "9/24/19 19:42",  "9/25/19 19:30",  "9/28/19 5:27"  ,
-                           "10/4/19 23:49",  "10/4/19 23:58",  "10/5/19 0:49"  ,
-                           "10/5/19 4:50" ,  "10/6/19 4:16" ,  "10/6/19 4:58"  ,
-                           "10/6/19 20:51",  "10/6/19 20:53",  "10/6/19 21:31" ,
-                           "10/6/19 23:57",  "10/7/19 4:25" ,  "10/7/19 6:12"  ,
-                           "10/7/19 11:10",  "10/7/19 23:51",  "10/8/19 0:26"  ,
-                           "10/8/19 5:00" ,  "10/8/19 20:09",  "10/8/19 20:46" ,
-                           "10/8/19 23:39",  "10/9/19 1:27" ,  "10/9/19 1:59"  ,
-                           "10/10/19 4:10",  "10/10/19 6:01",  "10/10/19 19:29",
-                           "10/10/19 20:12", "10/10/19 20:49", "10/11/19 1:34" ,
-                           "10/11/19 3:52",  "10/11/19 6:20",  "10/12/19 1:32" ,
-                           "10/12/19 3:06",  "10/12/19 5:09",  "10/12/19 6:03" ,
-                           "10/13/19 2:03",  "10/13/19 4:35",  "10/13/19 5:30" ,
-                           "10/14/19 0:09",  "10/14/19 0:48",  "10/14/19 11:44",
-                           "10/14/19 20:28", "10/14/19 22:46", "10/15/19 0:51" ,
-                           "10/15/19 0:56",  "10/15/19 4:50",  "10/15/19 5:27" ,
-                           "10/15/19 21:23", "10/15/19 23:11", "10/15/19 23:42",
-                           "10/16/19 0:54",  "10/16/19 3:30",  "10/17/19 3:35" ,
-                           "10/17/19 5:46",  "10/17/19 22:35", "10/18/19 1:38" ,
-                           "10/18/19 4:16",  "10/18/19 19:40", "10/18/19 19:41",
-                           "10/19/19 6:23",  "10/20/19 7:37",  "10/21/19 3:05" ,
-                           "10/21/19 19:19", "10/23/19 19:27", "10/7/19 0:15"  ,
-                           "10/11/19 1:55",  "10/11/19 1:59",  "10/23/19 23:09",
-                           "10/27/19 4:32",  "10/31/19 5:30",  "11/4/19 4:43"  ,
-                           "11/8/19 4:03" ,  "11/8/19 4:12" ,  "9/8/19 4:36"   ,
-                           "9/22/19 0:52" ,  "9/22/19 1:57" ,  "9/24/19 1:45"  ,
-                           "9/24/19 21:21",  "9/26/19 1:50" ,  "9/8/19 4:26"   ,
-                           "9/10/19 21:22",  "9/11/19 3:32" ,  "9/13/19 6:20"  ,
-                           "9/13/19 6:29" ,  "9/20/19 2:40" ,  "9/20/19 3:00"  ,
-                           "9/29/19 20:13",  "9/30/19 3:06" ,  "9/11/19 3:46"  ,
-                           "9/16/19 1:06" ,  "9/9/19 1:45"  ,  "9/9/19 6:06"   ,
-                           "9/10/19 0:18" ,  "9/10/19 2:38" ,  "9/10/19 2:41"  ,
-                           "9/10/19 2:43" ,  "9/10/19 6:56" ,  "9/10/19 20:47" ,
-                           "9/10/19 23:48",  "9/11/19 3:06" ,  "9/11/19 21:09" ,
-                           "9/12/19 0:03" ,  "9/12/19 1:37" ,  "9/12/19 21:54" ,
-                           "9/12/19 22:07",  "9/13/19 6:40" ,  "9/13/19 21:35" ,
-                           "9/14/19 0:24" ,  "9/14/19 4:24" ,  "9/14/19 4:40"  ,
-                           "9/14/19 23:37",  "9/15/19 6:06" ,  "9/15/19 22:35" ,
-                           "9/16/19 2:02" ,  "9/16/19 2:04" ,  "9/16/19 2:06"  ,
-                           "9/16/19 2:13" ,  "9/16/19 2:14" ,  "9/16/19 3:50"  ,
-                           "9/16/19 4:09" ,  "9/16/19 21:31",  "9/16/19 21:34" ,
-                           "9/17/19 4:54" ,  "9/18/19 21:58",  "9/19/19 0:24"  ,
-                           "9/19/19 1:13" ,  "9/19/19 1:57" ,  "9/19/19 4:49"  ,
-                           "9/19/19 21:15",  "9/19/19 21:21",  "9/19/19 21:39" ,
-                           "9/19/19 23:57",  "9/20/19 2:18" ,  "9/20/19 21:40" ,
-                           "9/20/19 21:45",  "9/20/19 21:55",  "9/20/19 23:55" ,
-                           "9/20/19 23:59",  "9/21/19 0:15" ,  "9/21/19 0:17"  ,
-                           "9/21/19 0:58" ,  "9/21/19 1:15" ,  "9/22/19 21:22" ,
-                           "9/22/19 21:58",  "9/22/19 22:24",  "9/23/19 3:52"  ,
-                           "9/24/19 22:08",  "9/24/19 22:21",  "9/24/19 22:22" ,
-                           "9/24/19 22:57",  "9/25/19 5:27" ,  "9/25/19 22:00" ,
-                           "9/27/19 4:34" ,  "9/27/19 21:20",  "9/27/19 21:55" ,
-                           "9/27/19 22:37",  "9/28/19 4:02" ,  "9/28/19 6:00"  ,
-                           "9/28/19 21:48",  "9/28/19 22:52",  "9/29/19 5:25"  ,
-                           "9/29/19 5:26" ,  "9/29/19 6:12" ,  "9/29/19 8:40" ),
-             species = c(  "Red Fox"  ,           "Red Fox",            
-                           "Red Fox"   ,          "Red Fox" ,           
-                          "Red Fox"     ,        "Red Fox"   ,         
-                           "Red Fox"     ,        "Red Fox"   ,         
-                           "Red Fox",             "Red Fox"    ,        
-                           "Red Fox"  ,           "Red Fox"   ,         
-                           "Red Fox" ,            "Red Fox"   ,         
-                           "Red Fox"   ,          "Red Fox"   ,         
-                           "Red Fox"    ,         "Red Fox"   ,         
-                           "Red Fox"     ,        "Red Fox"   ,         
-                           "Red Fox"      ,       "Red Fox"   ,         
-                           "Red Fox"       ,      "Red Fox"   ,         
-                           "Red Fox"        ,     "Red Fox"   ,         
-                           "Red Fox"         ,    "Red Fox"   ,         
-                           "Red Fox"          ,   "Red Fox"   ,         
-                           "Red Fox"           ,  "Red Fox"   ,         
-                           "Red Fox",             "Red Fox"   ,         
-                           "Red Fox" ,            "Red Fox"   ,         
-                           "Red Fox"  ,           "Red Fox"   ,         
-                           "Red Fox"   ,          "Red Fox"   ,         
-                           "Coyote"     ,         "Coyote"    ,         
-                           "Coyote"      ,        "Coyote"    ,         
-                           "Coyote"       ,       "Coyote"    ,         
-                           "Coyote"        ,      "Coyote"    ,         
-                           "Coyote"         ,     "Coyote"    ,         
-                           "Coyote"          ,    "Coyote"    ,         
-                           "Coyote"           ,   "Coyote"    ,         
-                           "Coyote"            ,  "Coyote"    ,         
-                           "Coyote" ,             "Coyote"    ,         
-                           "Coyote"  ,            "Coyote"     ,        
-                           "Coyote"   ,           "Coyote"    ,         
-                           "Coyote"    ,          "Coyote"    ,         
-                           "Coyote"     ,         "Coyote"    ,         
-                           "Coyote"      ,        "Coyote"    ,         
-                           "Coyote"       ,       "Coyote"    ,         
-                           "Coyote"        ,      "Coyote"    ,         
-                           "Coyote"         ,     "Coyote"    ,         
-                           "Coyote"          ,    "Coyote"    ,         
-                           "Coyote"           ,   "Coyote"    ,         
-                           "Coyote",              "Coyote"     ,        
-                           "Coyote" ,             "Coyote"      ,       
-                           "Mountain Cottontail", "Coyote"       ,      
-                           "Coyote",              "Coyote"        ,     
-                           "Coyote" ,             "Coyote"         ,    
-                           "Coyote"  ,            "Coyote"          ,   
-                           "Coyote"   ,           "Coyote"           ,  
-                           "Mountain Cottontail", "Coyote"            , 
-                           "Mountain Cottontail" ,"Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote",              "Coyote"            , 
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Coyote"             ,
-                           "Coyote",              "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote"             , "Coyote"             ,
-                           "Coyote"             , "Coyote"             ,
-                          "Coyote"              ,"Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote"             , "Mountain Cottontail",
-                           "Coyote"             , "Coyote"             ,
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote"             , "Coyote"             ,
-                           "Coyote"             , "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote"             , "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote"             , "Coyote"             ,
-                           "Mountain Cottontail", "Coyote"             ,
-                           "Mountain Cottontail", "Coyote"             ,
-                          "Coyote"              ,"Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote"             , "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Coyote"             , "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                          "Mountain Cottontail" ,"Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Mountain Cottontail",
-                          "Mountain Cottontail" ,"Mountain Cottontail",
-                           "Mountain Cottontail", "Coyote"             ,
-                           "Mountain Cottontail", "Mountain Cottontail",
-                           "Mountain Cottontail", "Coyote"             ,
-                          "Mountain Cottontail" ,"Mountain Cottontail",
-                           "Mountain Cottontail", "Coyote"             ,
-                          "Red Fox"             ,"Red Fox"            ,
-                          "Red Fox"             ,"Red Fox"            ,
-                        "Red Fox"             ,"Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                        "Red Fox"             ,"Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                        "Red Fox"             ,"Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                         "Red Fox"            , "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"           , 
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Coyote"             ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                          "Red Fox"           ,  "Red Fox"            ,
-                           "Red Fox"          ,   "Red Fox"            ,
-                           "Red Fox" ))
-  
-  UtahData$obs.time <- strptime(UtahData$obs.time,
-                                   format = "%m/%d/%y %H:%M")
-
-
-{r, eval=FALSE}
-UtahData() #loads data into environment and names it "UtahData"
-head(UtahData)
-
-{r, echo=FALSE}
-head(UtahData)
-
-Note that these observation times are already in "POSIXlt" format. Use the strptime() function to convert your own data's timestamp column to "POSIXlt" format.
+```
 
 <br>
+You'll want to use your own data, but for the sake of example we'll use the data that we used in the paper. You can access the entire data set via [Cove, et al. 2019](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1002/ecy.3353), our you can access a miniature version of this data set using the `UtahData()` function.
 
-To convert observation timestamps into activity curves, use the format_observedPDF() function. If your goal is to predict prey distribution based on a known s value, you only need to use this function on the predator data. If s is unknown and you wish to estimate it, use this function for both predator and prey data. Note that time.start and time.stop must be the same across all species and functions.
 
-{r, eval=FALSE}
+```{}
+UtahData() #loads data into environment and names it "UtahData"
+```
+<br>
+Note that these observation times are already in *POSIXlt* format. Use the `strptime()` function to convert your own data's timestamp column to *POSIXlt* format.
+
+<br>
+To convert observation timestamps into activity curves, use the `format_observedPDF()` function. If your goal is to predict prey distribution based on a known s value, you only need to use this function on the predator data. If s is unknown and you wish to estimate it, use this function for both predator and prey data. Note that time.start and time.stop must be the same across all species and functions.
+
+```{}
 cottontail <- format_observedPDF(df = UtahData, #name of data frame
                                  sp.col = "species", #name of species column in data frame 
                                  sp.name = "Mountain Cottontail", #name of focal species
@@ -648,12 +60,11 @@ fox <- format_observedPDF(df = UtahData,
                                  time.start = "18:00",
                                  time.stop = "12:00",
                                  time.col = "obs.time")
-
+```
 <br>
+To set up the a priori distribution, use the `format_idealPDF()` function.
 
-To set up the a priori distribution, use the format_idealPDF() function.
-
-{r, eval=FALSE}
+```{}
 ideal.dist <- format_idealPDF(time.start = "18:00", #specify start of active period as character without date
                               time.stop = "12:00", #specify end of active period as character without date
                               observedPDF = cottontail, #specify observed activity distribution
@@ -661,25 +72,21 @@ ideal.dist <- format_idealPDF(time.start = "18:00", #specify start of active per
                               param1 = 0, #various shape parameters governing the distribution (error messages will help you through these)
                               param2 = 1,
                               param3 = 0.2)
-
+```
 <br>
+For simplicity, we will only make one a priori distribution here. But be sure to test several options in your own analysis (and read the paper to understand why). The `format_idealPDF()` function offers a number of different distributions that will seamlessly work with the other functions included in this script. To see which pre-set distributions are possible, feed the function any value that you know isn't a distribution to throw a helpful error:
 
-For simplicity, we will only make one a priori distribution here. But be sure to test several options in your own analysis (and read the paper to understand why). The format_idealPDF() function offers a number of different distributions that will seamlessly work with the other functions included in this script. To see which pre-set distributions are possible, feed the function any value that you know isn't a distribution to throw a helpful error:
-
-{r, eval=FALSE}
+```{}
 ideal.dist <- format_idealPDF(time.start = "18:00",
                               time.stop = "12:00",
                               observedPDF = cottontail,
                               dist = "i don't know")
-
-{r, echo=FALSE}
-message("the following shapes are permissable (but custom shapes can be used as long as the vector length matches that of the disturbance vector and the vector sums to 1): beta, binomial, bimodal, kumaraswamy, normal, triangular, uniform.")
-
+```
+> ERROR: the following shapes are permissable (but custom shapes can be used as long as the vector length matches that of the disturbance vector and the vector sums to 1): beta, binomial, bimodal, kumaraswamy, normal, triangular, uniform.
 <br>
-
 Now that we have our ideal a priori distribution, as well as our observed distributions for both predator and prey, we can estimate the sensitivity of the prey to the predator using the estimate_activity() function.
 
-{r, eval = FALSE}
+```{}
 pred.list <- list() #create an empty list
 pred.list[[1]] <- fox #fill the first slot of the list with fox data
 
@@ -689,117 +96,32 @@ results <- estimate_activity(idealPDF = ideal.dist, #specify ideal a priori dist
                              confInt = TRUE, #indicate that we want to calculate a confidence interval
                              nIter = 1000, #specify the number of iterations to bootstrap over (this can take a while, so be patient or pick a small number)
                              AIC = TRUE) #instruct R to calcualte AIC score (only useful if comparing models)
+```
+| S | CI95 | negLL |  AIC  |
+| :---         |    :---        |         :---   |:---        |
+| 0.09791847   | (0.0884 - 0.1145)     | -531.6364    |1081.273 |
 
-{r, echo=FALSE}
-print.results <- data.frame(S = 0.09791847,
-                            CI95 = "(0.0884 - 0.1145)",
-                            negLL = -531.6364,
-                            AIC = 1081.273)
-rownames(print.results) <- ""
-
-print.results
+<br>
+While plotting activity curves can be useful, the above-printed results are the real pride of this model. Recall that s is the sensitivity of the prey to the predator. Rather than telling us the degree of overlap between the predator and prey activity curves, estimating s allows us to determine the degree to which the predator actually changes a prey's activity. In other words, this method provides us mechanistic results rather than descriptive results.
 
 <br>
 
-While plotting activity curves can be useful, the above-printed results are the real pride of this model. Recall that s is the sensitivity of the prey to the predator. Rather than telling us the degree of overlap between the predator and prey activity curves, estimating s allows us to determine the degree to which the predator actually changes a prey's activity. In other words, this method provides us mechanistic results rather than descriptive results.
+That being said, we do still want to visualize our results. You can feed the estimated s value into a predictive model using the `predict_activity()` function. Similar to how predator activity curves must be provided as a list, sensitivity values do as well.
 
-That being said, we do still want to visualize our results. You can feed the estimated s value into a predictive model using the predict_activity() function. Similar to how predator activity curves must be provided as a list, sensitivity values do as well.
+![readme plot5](https://github.com/Dan-Herrera/Estimating_Activity_Curves/assets/66024392/c88b8d67-4a2c-4861-bc36-95f5436d2fd4)
 
-{r, eval=FALSE}
-sens.list <- list()
-sens.list[[1]] <- 0.097 #value based on above estimation
-
-
-pred.prediction <- predict_activity(idealPDF = ideal.dist, #specify a priori distribution 
-                                           disturbance = pred.list, #specify predator activity distribution(s) as a list
-                                           sensitivity = sens.list) #specify sensitivity value(s) distributions as a list
-
-
-{r, echo=FALSE}
-plot.df <- data.frame(predicted = c( 8.566912e-04, 1.711209e-03, 2.560513e-03, 3.407250e-03, 4.251030e-03,
-                                     5.071634e-03, 5.897867e-03, 6.720016e-03, 7.503569e-03, 8.316221e-03,
-                                     9.125731e-03, 9.903240e-03, 1.068901e-02, 1.150838e-02, 1.232683e-02,
-                                     1.309704e-02, 1.389657e-02, 1.469109e-02, 1.539230e-02, 1.608371e-02,
-                                     1.686763e-02, 1.724880e-02, 1.704575e-02, 1.691910e-02, 1.679515e-02,
-                                     1.678028e-02, 1.674078e-02, 1.670570e-02, 1.681180e-02, 1.689351e-02,
-                                     1.679288e-02, 1.668130e-02, 1.647374e-02, 1.618581e-02, 1.590352e-02,
-                                     1.542938e-02, 1.507298e-02, 1.462294e-02, 1.435753e-02, 1.408714e-02,
-                                     1.375163e-02, 1.351017e-02, 1.326213e-02, 1.287950e-02, 1.245057e-02,
-                                     1.216223e-02, 1.185949e-02, 1.162609e-02, 1.157616e-02, 1.154364e-02,
-                                     1.200740e-02, 1.222669e-02, 1.243507e-02, 1.286458e-02, 1.288017e-02,
-                                     1.250760e-02, 1.215157e-02, 1.145147e-02, 1.092181e-02, 1.042507e-02,
-                                     9.644105e-03, 9.036900e-03, 8.780836e-03, 8.517042e-03, 8.520982e-03,
-                                     8.562461e-03, 8.616735e-03, 9.001054e-03, 9.064017e-03, 9.098650e-03,
-                                     9.308840e-03, 9.472937e-03, 9.371471e-03, 9.183482e-03, 9.378616e-03,
-                                     9.046260e-03, 8.569394e-03, 8.310271e-03, 7.716339e-03, 6.864251e-03,
-                                     6.256108e-03, 5.842858e-03, 5.473526e-03, 5.199015e-03, 4.963640e-03,
-                                     4.729742e-03, 4.509652e-03, 4.293642e-03, 4.077620e-03, 3.861395e-03,
-                                     3.646465e-03, 3.432874e-03, 3.217066e-03, 3.002335e-03, 2.787548e-03,
-                                     2.571839e-03, 2.357146e-03, 2.142944e-03, 1.926770e-03, 1.713788e-03,
-                                     1.499984e-03, 1.284893e-03, 1.072598e-03, 8.587432e-04, 6.449950e-04,
-                                     4.312716e-04, 2.164951e-04, 1.678930e-06),
-                      ideal = c(0.0008574491, 0.0017148982, 0.0025723473, 0.0034297964, 0.0042872454,
-                                0.0051446945, 0.0060021436, 0.0068595927, 0.0077170418, 0.0085744909,
-                                0.0094319400, 0.0102893891, 0.0111468382, 0.0120042872, 0.0128617363,
-                                0.0137191854, 0.0145766345, 0.0154340836, 0.0162915327, 0.0171489818,
-                                0.0180064309, 0.0184351554, 0.0182207931, 0.0180064309, 0.0177920686,
-                                0.0175777063, 0.0173633441, 0.0171489818, 0.0169346195, 0.0167202572,
-                                0.0165058950, 0.0162915327, 0.0160771704, 0.0158628081, 0.0156484459,
-                                0.0154340836, 0.0152197213, 0.0150053591, 0.0147909968, 0.0145766345,
-                                0.0143622722, 0.0141479100, 0.0139335477, 0.0137191854, 0.0135048232,
-                                0.0132904609, 0.0130760986, 0.0128617363, 0.0126473741, 0.0124330118,
-                                0.0122186495, 0.0120042872, 0.0117899250, 0.0115755627, 0.0113612004,
-                                0.0111468382, 0.0109324759, 0.0107181136, 0.0105037513, 0.0102893891,
-                                0.0100750268, 0.0098606645, 0.0096463023, 0.0094319400, 0.0092175777,
-                                0.0090032154, 0.0087888532, 0.0085744909, 0.0083601286, 0.0081457663,
-                                0.0079314041, 0.0077170418, 0.0075026795, 0.0072883173, 0.0070739550,
-                                0.0068595927, 0.0066452304, 0.0064308682, 0.0062165059, 0.0060021436,
-                                0.0057877814, 0.0055734191, 0.0053590568, 0.0051446945, 0.0049303323,
-                                0.0047159700, 0.0045016077, 0.0042872454, 0.0040728832, 0.0038585209,
-                                0.0036441586, 0.0034297964, 0.0032154341, 0.0030010718, 0.0027867095,
-                                0.0025723473, 0.0023579850, 0.0021436227, 0.0019292605, 0.0017148982,
-                                0.0015005359, 0.0012861736, 0.0010718114, 0.0008574491, 0.0006430868,
-                                0.0004287245, 0.0002143623, 0.0000000000),
-                      observed = c(6.110388e-04, 1.157283e-03, 1.997289e-03, 2.578479e-03, 3.159668e-03,
-                                   4.621472e-03, 5.469964e-03, 6.318455e-03, 8.170896e-03, 9.133871e-03,
-                                   1.009685e-02, 1.199548e-02, 1.372167e-02, 1.440969e-02, 1.509771e-02,
-                                   1.598198e-02, 1.616876e-02, 1.635555e-02, 1.635686e-02, 1.622773e-02,
-                                   1.621364e-02, 1.619954e-02, 1.638660e-02, 1.656470e-02, 1.674280e-02,
-                                   1.709911e-02, 1.717994e-02, 1.726077e-02, 1.711297e-02, 1.667501e-02,
-                                   1.637324e-02, 1.607147e-02, 1.544793e-02, 1.517305e-02, 1.489816e-02,
-                                   1.444787e-02, 1.421936e-02, 1.388413e-02, 1.372304e-02, 1.356196e-02,
-                                   1.318876e-02, 1.294944e-02, 1.271012e-02, 1.211652e-02, 1.144722e-02,
-                                   1.110108e-02, 1.075494e-02, 1.008059e-02, 9.780425e-03, 9.480256e-03,
-                                   9.072319e-03, 9.049720e-03, 9.027122e-03, 9.472677e-03, 1.038253e-02,
-                                   1.096127e-02, 1.154002e-02, 1.261180e-02, 1.294787e-02, 1.328394e-02,
-                                   1.338568e-02, 1.294622e-02, 1.255514e-02, 1.216406e-02, 1.130493e-02,
-                                   1.094348e-02, 1.058202e-02, 1.008667e-02, 9.944549e-03, 9.802427e-03,
-                                   9.673385e-03, 9.665722e-03, 9.723081e-03, 9.780440e-03, 1.001593e-02,
-                                   1.016222e-02, 1.030851e-02, 1.049487e-02, 1.034046e-02, 9.991531e-03,
-                                   9.642602e-03, 8.353668e-03, 7.494146e-03, 6.634623e-03, 4.792137e-03,
-                                   3.966776e-03, 3.141414e-03, 1.887503e-03, 1.087926e-03, 8.887150e-04,
-                                   6.895042e-04, 5.888530e-04, 6.314351e-04, 6.740172e-04, 8.393480e-04,
-                                   9.905957e-04, 1.023453e-03, 1.056311e-03, 1.004260e-03, 9.263719e-04,
-                                   8.484839e-04, 6.368925e-04, 5.309919e-04, 4.250913e-04, 2.526579e-04,
-                                   1.339904e-04, 9.877304e-05, 6.355572e-05),
-                      time = seq(from = 1, to = 108, by =1))
-
-ggplot(data = plot.df, aes(x= time, y = ideal))+
-  geom_line(col = "grey")+
-  geom_line(aes(x = time, y = observed),
-            col = "red")+
-  geom_line(aes(x = time, y = predicted),
-            col = "blue")+
-  scale_x_continuous(breaks = c(0,25,50,75,100),
-                     labels = c("18:00", "22:30", "3:00", "7:30", "12:00"))+
-  xlab("time")+ylab("activity density")+
-  theme_bw()
-
+<br>
 
 This is slightly different than the output you'll see when using the functions on your own computer. Here, we see the ideal distribution (triangular distribution) in grey, the observed cottontail distribution in red, and the predicted cottontail distribution in blue. As you can see, the predicted line resembles the observed line, and sufficiently deviates from the a priori distribution. In other words, it works!
 
+<br>
+
 While this function will plot a rudamentary visualization in your plotting window, it will also save the results to your environment as a data frame (provided you run the function as a named object, eg. name <- function(arguments)). You can then use that data frame to create a more robust visualization, which is what I have shown here.
+
+<br>
 
 We hope that this model suits your needs, and that the functions included in the activityFunctions.R script are flexible enough to meet your needs. Feel free to use this model as is, feed the model different types of data (e.g., precipitation data instead of predator data), or improve upon the model by including additional terms. Also, if you're a better coder than I am, I would love help implementing a better likelihood estimator (the current estimator searches over values much faster than my homemade estimator could, but but crashes when I try to use two predator data sets in the same model)!
 
-Finally, we encourage you to read the paper, and cite us if you decide on using this model. Please feel free to reach out if you have any questions or comments (herrerawildlife@gmail.com). You can also reach me via my personal website.
+<br>
+
+Finally, we encourage you to read the paper, and cite us if you decide on using this model. Please feel free to reach out if you have any questions or comments (herrerawildlife@gmail.com). You can also reach me via my [personal website](https://www.herrerawildlife.com/).
